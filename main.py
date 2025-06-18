@@ -12,6 +12,13 @@ def cria_imagem_sintetica(largura, altura):
     """
     Cria uma imagem sintética em escala de cinza como um objeto imagem PIL.
     Simula um gradiente para fins de teste.
+
+    Args:
+        largura (int): A largura desejada para a imagem.
+        altura (int): A altura desejada para a imagem.
+
+    Returns:
+        Image: Um objeto de imagem PIL em escala de cinza com um gradiente.
     """
     imagem = Image.new("L", (largura, altura))
     pixels = imagem.load()
@@ -26,6 +33,13 @@ def cria_imagem_sintetica(largura, altura):
 def imagem_pil_para_lista(imagem):
     """
     Converte uma imagem PIL em uma lista de listas de pixels.
+
+    Args:
+        imagem (Image.Image): O objeto de imagem PIL a ser convertido.
+
+    Returns:
+        list[list[int]]: Uma lista de listas representando os valores dos pixels da imagem.
+        Cada sublista corresponde a uma linha da imagem.
     """
     largura, altura = imagem.size
     lista_pixels = []
@@ -40,6 +54,12 @@ def imagem_pil_para_lista(imagem):
 def lista_para_imagem_pil(lista_pixels):
     """
     Converte uma lista de listas de pixels em uma imagem PIL.
+
+    Args:
+        lista_pixels (list[list[int]]): Uma lista de listas de pixels.
+
+    Returns:
+        Image.Image: Um objeto de imagem PIL em escala de cinza criado a partir dos pixels.
     """
     altura = len(lista_pixels)
     largura = len(lista_pixels[0])
@@ -65,6 +85,20 @@ def cria_mascara(formato_img, tipo_mascara="rectangle", params=None):
     """
     Cria uma imagem booleana para a imagem
     True indica pixel faltante e False indica pixel presente.
+
+    Args:
+        formato_img (tuple): Uma tupla (largura, altura) da imagem.
+        tipo_mascara (str): O tipo de máscara a ser criada ("rectangle" ou "circle").
+        params (tuple, optional): Parâmetros específicos para o tipo de máscara.
+        Para "rectangle": (linha_comeco, linha_fim, coluna_comeco, coluna_fim).
+        Para "circle": (linha_centro, coluna_centro, raio).
+        Se None, valores padrão são usados.
+
+    Returns:
+        list[list[bool]]: Uma lista de listas de booleanos representando a máscara.
+
+    Raises:
+        ValueError: Se um tipo de máscara desconhecido for fornecido.
     """
     altura, largura = formato_img
     mascara = [[False for _ in range(largura)] for _ in range(altura)]
@@ -106,6 +140,13 @@ def aplica_mascara_para_lista_imagem(lista_pixels, mascara):
     Cria uma cópia da lista de pixels e aplica a máscara,
     definindo os pixels mascarados como 0
     Retorna a liamgem mascarada em formato de lista de listas.
+
+    Args:
+        lista_pixels (list[list[int]]): A imagem original em formato de lista de listas.
+        mascara (list[list[bool]]): A máscara booleana indicando os pixels a serem mascarados.
+
+    Returns:
+        list[list[int]]: A imagem mascarada em formato de lista de listas.
     """
     altura = len(lista_pixels)
     largura = len(lista_pixels[0])
@@ -123,6 +164,12 @@ def aplica_mascara_para_lista_imagem(lista_pixels, mascara):
 def copia_lista_imagem(lista_pixels):
     """
     Cria uma cópia da lista de pixels.
+
+    Args:
+        lista_pixels (list[list[int]]): A lista de listas de pixels a ser copiada.
+
+    Returns:
+        list[list[int]]: Uma nova lista de listas contendo os mesmos valores.
     """
     return [row[:] for row in lista_pixels]
 
@@ -131,6 +178,13 @@ def copia_lista_imagem(lista_pixels):
 def calcula_mse(original, reconstruida):
     """
     Calcula o Erro Quadrático Médio (MSE).
+
+    Args:
+        original (list[list[int]]): A imagem original.
+        reconstruida (list[list[int]]): A imagem reconstruída.
+
+    Returns:
+        float: O valor do MSE.
     """
     altura = len(original)
     largura = len(original[0])
@@ -146,6 +200,13 @@ def calcula_psnr(original, reconstruida):
     """
     Calcula o Pico de Sinal sobre Ruído (PSNR).
     MAX_I é 255 para imagens de 8 bits.
+
+    Args:
+        original (list[list[int]]): A imagem original.
+        reconstruida (list[list[int]]): A imagem reconstruída.
+
+    Returns:
+        float: O valor do PSNR em dB, ou float('inf') se o MSE for zero.
     """
     mse = calcula_mse(original, reconstruida)
     if mse == 0:
@@ -159,6 +220,17 @@ def calcula_ssim(original, reconstruida, k1=0.01, k2=0.03, l=255, window_size=11
     """
     Calcula o Índice de Similaridade Estrutural (SSIM).
     Esta é uma implementação simplificada e não otimizada.
+
+    Args:
+        original (list[list[int]]): A imagem original.
+        reconstruida (list[list[int]]): A imagem reconstruída.
+        k1 (float): Pequena constante para evitar divisão por zero (parte da fórmula SSIM).
+        k2 (float): Pequena constante para evitar divisão por zero (parte da fórmula SSIM).
+        l (int): O valor dinâmico máximo do pixel (255 para imagens de 8 bits).
+        window_size (int): O tamanho da janela quadrada para calcular as métricas locais.
+
+    Returns:
+        float: O valor médio do SSIM.
     """
     altura = len(original)
     largura = len(original[0])
@@ -217,6 +289,16 @@ def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01
     """
     Implementa o Impainting Poissoniano usando Gauss-Seidel com ordenação Red-Black.
     Opera em listas de listas de pixels.
+    A ordenação 'red-black' alterna entre pixels vizinhos para acelerar a convergência
+    
+     Args:
+        lista_pixels (list[list[int]]): A imagem mascarada inicial.
+        mascara (list[list[bool]]): A máscara booleana.
+        iteracoes (int): O número máximo de iterações para o algoritmo.
+        tolerancia (float): O critério de parada baseado no erro máximo entre iterações.
+
+    Returns:
+        list[list[int]]: A imagem reconstruída.
     """
     altura = len(lista_pixels)
     largura = len(lista_pixels[0])
@@ -295,12 +377,18 @@ def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01
     print("Gauss-Seidel Red-Black concluído.")
     return imagem_reconstruida
 
-
 def interpolacao_bilinear(lista_pixels, mascara):
     """
     Preenche furos usando interpolação bilinear.
     Para cada pixel mascarado, encontra 4 vizinhos conhecidos e interpola.
     Opera em listas de listas de pixels.
+
+     Args:
+        lista_pixels (list[list[int]]): A imagem mascarada inicial.
+        mascara (list[list[bool]]): A máscara booleana.
+
+    Returns:
+        list[list[int]]: A imagem reconstruída.
     """
     altura = len(lista_pixels)
     largura = len(lista_pixels[0])
@@ -349,11 +437,21 @@ def interpolacao_bilinear(lista_pixels, mascara):
     print("Interpolação bilinear concluída.")
     return imagem_reconstruida
 
-
 def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
     """
     Preenche furos usando interpolação em lagrange 2D.
-    Opera em lstas de listas de pixels.
+    Opera em listas de listas de pixels.
+    'vizinhos_tam' = Tamanho da vizinhança usada para encontrar pontos de interpolação,
+    valores maiores podem melhorar a suavidade, porém aumentam o custo computacional
+
+    Args:
+        lista_pixels (list[list[int]]): A imagem mascarada inicial.
+        mascara (list[list[bool]]): A máscara booleana.
+        vizinhos_tam (int): O raio da vizinhança a ser considerada para encontrar pontos de interpolação.
+                            Valores maiores podem levar a resultados mais suaves, mas aumentam o custo computacional.
+
+    Returns:
+        list[list[int]]: A imagem reconstruída.
     """
 
     altura = len(lista_pixels)
@@ -365,7 +463,17 @@ def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
     )
 
     def lagrange_aux(x, pontos, k):
-        """Calcula o k-ésimo termo de Lagrange."""
+        """
+        Calcula o k-ésimo termo de Lagrange.
+        
+        Args:
+            x (float): O ponto no qual avaliar o polinômio.
+            pontos (list[tuple]): Lista de tuplas (coordenada, valor) dos pontos conhecidos.
+            k (int): O índice do ponto (x_k, y_k) no qual o termo de Lagrange é calculado.
+
+        Returns:
+            float: O valor do k-ésimo termo de Lagrange.
+        """
 
         resultado = 1.0
         for j, p_j in enumerate(pontos):  # j -> índice, p_j -> valor do ponto
@@ -432,9 +540,7 @@ def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
     print("Interpolação Lagrange 2D concluída.")
     return imagem_reconstruida
 
-
 # --- Função Principal ---
-
 
 def run_projeto():
     """
@@ -448,15 +554,9 @@ def run_projeto():
     lista_img_original = imagem_pil_para_lista(img_pil_original)
 
     # 2. Cria a máscara
+    # Define os parâmetros para uma máscara retangular no centro da imagem
     mascara_params = (
-        # altura_img // 4,
-        # altura_img * 3 // 4,
-        # largura_img // 4,
-        # largura_img * 3 // 4,
-        64,
-        192,
-        64,
-        192,
+        64, 192, 64, 192,
     )
     mascara = cria_mascara(
         (largura_img, altura_img), tipo_mascara="rectangle", params=mascara_params
@@ -470,7 +570,7 @@ def run_projeto():
     salva_imagem(lista_img_original, "imagem_original.png")
     salva_imagem(img_mascarada_teste, "imagem_mascarada.png")
 
-    result = {}
+    result = {} # Dicionário para armazenar as imagens reconstruídas por método
 
     print(
         "\n--- Executando Impainting Poissoniano com o método Gauss-Seidel Red-Black ---"
