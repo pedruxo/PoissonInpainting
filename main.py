@@ -20,12 +20,12 @@ def cria_imagem_sintetica(largura, altura):
     Returns:
         Image: Um objeto de imagem PIL em escala de cinza com um gradiente.
     """
-    imagem = Image.new("L", (largura, altura))
-    pixels = imagem.load()
+    imagem = Image.new("L", (largura, altura)) # L para escala de cinza
+    pixels = imagem.load() # Carreha pixels para edição
 
     for r in range(altura):
         for c in range(largura):
-            valor_pixel = int(255 * (r / altura + c / largura) / 2)
+            valor_pixel = int(255 * (r / altura + c / largura) / 2) # Gradiente para teste
             pixels[c, r] = valor_pixel
     return imagem
 
@@ -68,7 +68,7 @@ def lista_para_imagem_pil(lista_pixels):
 
     for r in range(altura):
         for c in range(largura):
-            pixels[c, r] = int(round(lista_pixels[r][c]))
+            pixels[c, r] = int(round(lista_pixels[r][c])) # Garante que é int e arredonda
     return imagem
 
 
@@ -103,7 +103,7 @@ def cria_mascara(formato_img, tipo_mascara="rectangle", params=None):
     altura, largura = formato_img
     mascara = [[False for _ in range(largura)] for _ in range(altura)]
 
-    if tipo_mascara == "rectangle":
+    if tipo_mascara == "rectangle": # Máscara retangular padrão no centro
         if params is None:
             linha_comeco = altura // 4
             linha_fim = altura * 3 // 4
@@ -157,7 +157,7 @@ def aplica_mascara_para_lista_imagem(lista_pixels, mascara):
     for r in range(altura):
         for c in range(largura):
             if mascara[r][c]:
-                imagem_mascarada[r][c] = 0
+                imagem_mascarada[r][c] = 0 # Valor inicial para pixels faltantes
     return imagem_mascarada
 
 
@@ -210,7 +210,7 @@ def calcula_psnr(original, reconstruida):
     """
     mse = calcula_mse(original, reconstruida)
     if mse == 0:
-        return float("inf")
+        return float("inf") # Imagens idênticas
     max_i = 255.0
     psnr = 10 * math.log10(max_i**2 / mse)
     return psnr
@@ -253,9 +253,11 @@ def calcula_ssim(original, reconstruida, k1=0.01, k2=0.03, l=255, window_size=11
                     window_original.append(original[wr][wc])
                     window_reconstruida.append(reconstruida[wr][wc])
 
+            # Calcula médias
             mu_x = sum(window_original) / len(window_original)
             mu_y = sum(window_reconstruida) / len(window_reconstruida)
 
+            # Calcula variâncias e covariâncias
             sigma_x = sum([(p - mu_x) ** 2 for p in window_original]) / len(
                 window_original
             )
@@ -285,7 +287,7 @@ def calcula_ssim(original, reconstruida, k1=0.01, k2=0.03, l=255, window_size=11
 
 
 # --- Métodos de Impainting ---
-def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01):
+def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=4000, tolerancia=0.01):
     """
     Implementa o Impainting Poissoniano usando Gauss-Seidel com ordenação Red-Black.
     Opera em listas de listas de pixels.
@@ -302,8 +304,9 @@ def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01
     """
     altura = len(lista_pixels)
     largura = len(lista_pixels[0])
-    imagem_reconstruida = copia_lista_imagem(lista_pixels)
+    imagem_reconstruida = copia_lista_imagem(lista_pixels) # A imagem vem mascarada
 
+    # Identifica pixels pretos e vermelhos dentro da máscara
     pixels_red = []
     pixels_black = []
     for r in range(altura):
@@ -318,7 +321,7 @@ def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01
     for it_count in range(iteracoes):
         erro_max = 0.0
 
-        for r, c in pixels_red:
+        for r, c in pixels_red: # 1. Passagem vermelha
             soma_vizinhos = 0.0
             count_vizinhos = 0
             erro = 0.0
@@ -344,7 +347,7 @@ def gauss_seidel_red_black(lista_pixels, mascara, iteracoes=800, tolerancia=0.01
                     erro_max = erro
                 imagem_reconstruida[r][c] = novo_valor
 
-        for r, c in pixels_black:
+        for r, c in pixels_black: # 2. Passagem preta
             soma_vizinhos = 0.0
             count_vizinhos = 0
 
@@ -397,22 +400,29 @@ def interpolacao_bilinear(lista_pixels, mascara):
     print("Iniciando interpolação bilinear...")
     for r in range(altura):
         for c in range(largura):
-            if mascara[r][c]:
+            if mascara[r][c]: # Se o pixel está mascarado
                 x1, y1, x2, y2 = -1, -1, -1, -1
                 q11, q12, q21, q22 = 0, 0, 0, 0
 
+                # Encontrar x1 na coluna à esquerda
                 for coluna_esq in range(c - 1, -1, -1):
                     if not mascara[r][coluna_esq]:
                         x1 = coluna_esq
                         break
+                
+                # Encontrar x2 na coluna à direita
                 for coluna_dir in range(c + 1, largura):
                     if not mascara[r][coluna_dir]:
                         x2 = coluna_dir
                         break
+
+                # Encontrar y1 na linha acima
                 for linha_acima in range(r - 1, -1, -1):
                     if not mascara[linha_acima][c]:
                         y1 = linha_acima
                         break
+
+                # Encontrar y2 na linha abaixo
                 for linha_abaixo in range(r + 1, altura):
                     if not mascara[linha_abaixo][c]:
                         y2 = linha_abaixo
@@ -433,7 +443,7 @@ def interpolacao_bilinear(lista_pixels, mascara):
                     valor_pixel = int(round(r1 * (1 - dy) + r2 * dy))
                     imagem_reconstruida[r][c] = valor_pixel
                 else:
-                    pass  # Não há vizinhos suficientes para interpolar completamente
+                    pass  # Não há vizinhos suficientes para interpolação bilinear completa
     print("Interpolação bilinear concluída.")
     return imagem_reconstruida
 
@@ -462,6 +472,7 @@ def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
         f"Iniciando interpolação Lagrange 2D com vizinhança de tamanho {vizinhos_tam}..."
     )
 
+    # Função auxiliar para calcular o polinômio de Lagrange 2D
     def lagrange_aux(x, pontos, k):
         """
         Calcula o k-ésimo termo de Lagrange.
@@ -483,7 +494,7 @@ def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
 
     for r in range(altura):
         for c in range(largura):
-            if mascara[r][c]:
+            if mascara[r][c]: # Se o pixel está mascarado
                 pontos_x = []
                 pontos_y = []
 
@@ -526,6 +537,7 @@ def interpolacao_lagrange_2d(lista_pixels, mascara, vizinhos_tam=3):
 
                     valor_interpolado = 0.0
                     for valor_x, valor_y, valor in pontos_grade:
+                        # Encontrar os índices nos arrays de coordenadas únicas
                         x_index = coords_x.index(valor_x)
                         y_index = coords_y.index(valor_y)
 
@@ -576,7 +588,7 @@ def run_projeto():
         "\n--- Executando Impainting Poissoniano com o método Gauss-Seidel Red-Black ---"
     )
     gs_rb_reconstruida = gauss_seidel_red_black(
-        img_mascarada_teste, mascara, iteracoes=2000, tolerancia=0.1
+        img_mascarada_teste, mascara, iteracoes=5000, tolerancia=1e-8
     )
     result["Gauss-Seidel Red-Black"] = gs_rb_reconstruida
     salva_imagem(gs_rb_reconstruida, "imagem_reconstruida_gs_rb.png")
